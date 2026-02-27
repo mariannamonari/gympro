@@ -1,7 +1,7 @@
-import type { AlunoDTO } from "../interface/AlunoDTO.js";
-import DataBaseModel from "./DatabaseModel.js";
+import {DatabaseModel} from "./DataBaseModel.js";
 
-const database = new DataBaseModel().pool;
+
+const database = new DatabaseModel().pool;
 
 class Aluno {
   private idAluno: number = 0;
@@ -9,9 +9,9 @@ class Aluno {
   private sobrenome: string;
   private cpf: string;
   private dataNascimento?: Date;
-  private celular: string;
-  private email: string;
   private endereco?: string;
+  private email: string;
+  private celular: string;
   private senha: string;
   private statusAluno: string;
 
@@ -19,22 +19,22 @@ class Aluno {
     _nome: string,
     _sobrenome: string,
     _cpf: string,
-    _dataNascimento: Date | undefined,
+    _dataNascimento: Date,
     _celular: string,
-    _email: string,
-    _endereco: string | undefined,
     _senha: string,
-    _statusAluno: string
+    _statusAluno: string,
+    _endereco?: string,
+    _email?: string
   ) {
-    this.nome = _nome;
-    this.sobrenome = _sobrenome;
-    this.cpf = _cpf;
-    this.dataNascimento = _dataNascimento;
-    this.celular = _celular;
-    this.email = _email;
-    this.endereco = _endereco;
-    this.senha = _senha;
-    this.statusAluno = _statusAluno;
+   this.nome = _nome;
+this.sobrenome = _sobrenome;
+this.cpf = _cpf;
+this.dataNascimento = _dataNascimento;
+this.celular = _celular;
+this.senha = _senha;
+this.statusAluno = _statusAluno;
+this.endereco = _endereco || '';
+this.email = _email || '';
   }
 
   public getIdAluno(): number {
@@ -65,10 +65,10 @@ class Aluno {
     this.cpf = cpf;
   }
 
-  public getDataNascimento(): Date | undefined {
-    return this.dataNascimento;
+  public getDataNascimento(): Date{
+    return this.dataNascimento!;
   }
-  public setDataNascimento(dataNascimento: Date | undefined): void {
+  public setDataNascimento(dataNascimento: Date ): void {
     this.dataNascimento = dataNascimento;
   }
 
@@ -86,10 +86,10 @@ class Aluno {
     this.email = email;
   }
 
-  public getEndereco(): string | undefined {
-    return this.endereco;
+  public getEndereco(): string {
+    return this.endereco!;
   }
-  public setEndereco(endereco: string | undefined): void {
+  public setEndereco(endereco: string): void {
     this.endereco = endereco;
   }
 
@@ -107,9 +107,6 @@ class Aluno {
     this.statusAluno = statusAluno;
   }
 
-  // ============================
-  // LISTAR TODOS (ordenado)
-  // ============================
   static async listarAlunos(): Promise<Array<Aluno> | null> {
     try {
       const lista: Array<Aluno> = [];
@@ -130,7 +127,7 @@ class Aluno {
           alunoBD.status_aluno
         );
 
-        // ⚠️ no teu SQL é id_aluno
+
         novoAluno.setIdAluno(alunoBD.id_aluno);
 
         lista.push(novoAluno);
@@ -143,14 +140,12 @@ class Aluno {
     }
   }
 
-  // ============================
-  // CADASTRAR
-  // ============================
-  static async cadastrarAluno(aluno: AlunoDTO): Promise<boolean> {
+
+  static async cadastrarAluno(aluno: Aluno): Promise<boolean> {
     try {
       const query = `
         INSERT INTO Aluno (nome, sobrenome, cpf, data_nascimento, endereco, email, celular, senha, status_aluno)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, 'ATIVO'))
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,);
         RETURNING id_aluno;
       `;
 
@@ -158,12 +153,12 @@ class Aluno {
         aluno.nome.toUpperCase(),
         aluno.sobrenome.toUpperCase(),
         aluno.cpf,
-        aluno.dataNascimento ?? null,
-        aluno.endereco ?? null,
-        aluno.email,
+        aluno.dataNascimento,
+        aluno.endereco,
+        aluno.email?.toLowerCase(),
         aluno.celular,
         aluno.senha,
-        aluno.statusAluno ?? "ATIVO",
+        aluno.statusAluno
       ]);
 
       if (respostaBD.rows.length > 0) {
@@ -178,9 +173,6 @@ class Aluno {
     }
   }
 
-  // ============================
-  // LISTAR 1 POR ID
-  // ============================
   static async listarAluno(idAluno: number): Promise<Aluno | null> {
     try {
       const query = `SELECT * FROM Aluno WHERE id_aluno=$1;`;
